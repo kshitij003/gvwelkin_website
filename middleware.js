@@ -1,22 +1,22 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server'; // Ensure you import NextResponse
+import { NextResponse } from 'next/server'; 
 
-// Define routes that are protected
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)', 
   '/api/webhooks(.*)', 
 ]);
 
-
-
 export default clerkMiddleware(async (auth, request) => {
-  // For public routes, don't require authentication
   if (isPublicRoute(request)) {
-    return;
+    return NextResponse.next(); // Explicitly allow public routes
   }
-else {
-    // Protect all other routes (except public) with general authentication
-    await auth.protect();
+
+  try {
+    await auth().protect(); // Ensure this is correctly awaited
+    return NextResponse.next(); // Continue the request after authentication
+  } catch (error) {
+    console.error("Authentication Error:", error);
+    return new NextResponse("Unauthorized", { status: 401 }); // Handle errors properly
   }
 });
 
