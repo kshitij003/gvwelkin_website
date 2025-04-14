@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server'; 
+import { redirectToSignIn } from '@clerk/nextjs/server';
 
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)', 
@@ -16,7 +17,7 @@ export default clerkMiddleware(async (auth, request) => {
     return NextResponse.next(); // Continue the request after authentication
   } catch (error) {
     console.error("Authentication Error:", error);
-    return new NextResponse("Unauthorized", { status: 401 }); // Handle errors properly
+    return redirectToSignIn({ returnBackUrl: request.url }); // Handle errors properly
   }
 });
 
