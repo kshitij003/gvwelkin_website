@@ -1,28 +1,29 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server'; 
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)', 
-  '/api/webhooks(.*)', 
+  "/sign-in(.*)",
+  "/api/webhooks(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
+export default clerkMiddleware((auth, request) => {
   if (isPublicRoute(request)) {
-    return NextResponse.next(); // Explicitly allow public routes
+    return NextResponse.next(); // Allow public routes
   }
 
-  try {
-    await auth().protect(); // Ensure this is correctly awaited
-    return NextResponse.next(); // Continue the request after authentication
-  } catch (error) {
-    console.error("Authentication Error:", error);
-    return new NextResponse("Unauthorized", { status: 401 }); // Handle errors properly
+  const { userId } = auth();
+
+  if (!userId) {
+    // User is not authenticated → redirect to sign-in
+    const signInUrl = new URL("/sign-in", request.url);
+    return NextResponse.redirect(signInUrl);
   }
+
+  return NextResponse.next(); // Authenticated → allow access
 });
 
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
+    "/((?!_next|.*\\..*).*)", // everything except static files
   ],
 };
