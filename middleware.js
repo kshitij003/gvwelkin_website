@@ -7,11 +7,17 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware((auth, request) => {
+  const { userId } = auth();
+
+  // If the user is authenticated and tries to access /sign-in → redirect to home
+  if (userId && request.nextUrl.pathname.startsWith("/sign-in")) {
+    const homeUrl = new URL("/", request.url);
+    return NextResponse.redirect(homeUrl);
+  }
+
   if (isPublicRoute(request)) {
     return NextResponse.next(); // Allow public routes
   }
-
-  const { userId } = auth();
 
   if (!userId) {
     // User is not authenticated → redirect to sign-in
